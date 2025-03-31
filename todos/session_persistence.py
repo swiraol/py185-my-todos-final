@@ -27,3 +27,8 @@ class SessionPersistence:
         if lst:
             lst['title'] = new_title 
             self.session.modified = True
+    
+    def delete_list(self, list_id):
+        lists = self.all_lists()
+        self.session['lists'] = [lst for lst in lists if lst['id'] != list_id]
+        self.session.modified = True
