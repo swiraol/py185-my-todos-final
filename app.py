@@ -78,19 +78,13 @@ def get_lists():
 def create_list():
     title = request.form["list_title"].strip()
 
-    error = error_for_list_title(title, session['lists'])
+    error = error_for_list_title(title, g.storage.all_lists())
     if error:
         flash(error, "error")
         return render_template('new_list.html', title=title)
 
-    session['lists'].append({
-        'id': str(uuid4()),
-        'title': title,
-        'todos': [],
-    })
-
+    g.storage.create_new_list(title)
     flash("The list has been created.", "success")
-    session.modified = True
     return redirect(url_for('get_lists'))
 
 @app.route("/lists/new")

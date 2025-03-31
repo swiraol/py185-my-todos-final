@@ -12,3 +12,12 @@ class SessionPersistence:
     
     def all_lists(self):
         return self.session['lists']
+    
+    def create_new_list(self, title):
+        lists = g.storage.all_lists()
+        lists.append({
+            'id': str(uuid4()),
+            'title': title,
+            'todo': []
+        })
+        self.session.modified = True
