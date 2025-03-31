@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 class SessionPersistence:
     def __init__(self, session):
         self.session = session
@@ -7,3 +9,6 @@ class SessionPersistence:
     def find_list(self, list_id):
         found = (lst for lst in self.session['lists'] if lst['id'] == list_id)
         return next(found, None)
+    
+    def all_lists(self):
+        return self.session['lists']
