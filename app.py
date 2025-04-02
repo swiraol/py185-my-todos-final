@@ -113,10 +113,9 @@ def create_todo(lst, list_id):
 @app.route("/lists/<list_id>/todos/<todo_id>/toggle", methods=["POST"])
 @require_todo
 def update_todo_status(lst, todo, list_id, todo_id):
-    todo['completed'] = (request.form['completed'] == 'True')
-
+    is_completed = request.form['completed'] == 'True'
+    g.storage.update_todo_status(list_id, todo_id, is_completed)
     flash("The todo has been updated.", "success")
-    session.modified = True
     return redirect(url_for('show_list', list_id=list_id))
 
 @app.route("/lists/<list_id>/todos/<todo_id>/delete", methods=["POST"])
