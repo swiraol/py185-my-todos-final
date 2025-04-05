@@ -1,3 +1,4 @@
+import os
 from contextlib import contextmanager 
 
 import logging
@@ -58,27 +59,44 @@ class DatabasePersistence:
             connection.close()
     
     def find_list(self, list_id):
-        query = 'SELECT * FROM lists WHERE id = %s'
+        query = """
+            SELECT lists.*,
+                   COUNT(todos.id) AS todos_count,
+                   COUNT(NULLIF(todos.completed, True)) AS todos_remaining 
+            FROM lists
+            LEFT JOIN todos ON lists.id = todos.list_id
+            WHERE lists.id = %s
+            GROUP BY lists.id
+            ORDER BY lists.title
+        """
         logger.info("Executing query: %s with list_id: %s", query, list_id)
         with self._database_connect() as conn:
             with conn.cursor(cursor_factory=DictCursor) as cursor:
                 cursor.execute(query, (list_id,))
                 lst = dict(cursor.fetchone())
-        lst.setdefault('todos', [])
-        lst['todos'] = lst['todos'] + self._find_todos_for_list(list_id)
+        # lst.setdefault('todos', [])
+        # lst['todos'] = lst['todos'] + self._find_todos_for_list(list_id)
+        # lst.setdefault('todos_remaining', 0)
+        # lst.setdefault('todos_count', 0)
+        # logger.info("find_list returns: %s", lst)
         return lst  
     
     def all_lists(self):
-        query = 'SELECT * FROM lists'
+        query = """
+            SELECT lists.*,
+                   COUNT(todos.id) AS todos_count,
+                   COUNT(NULLIF(todos.completed, True)) AS todos_remaining 
+            FROM lists
+            LEFT JOIN todos ON lists.id = todos.list_id
+            GROUP BY lists.id
+            ORDER BY lists.title
+        """
         logger.info("Executing query: %s", query)
         with self._database_connect() as connection:
             with connection.cursor(cursor_factory=DictCursor) as cursor:
                 cursor.execute(query)
                 results = cursor.fetchall()
         lists = [dict(result) for result in results]
-        for lst in lists:
-            todos = self._find_todos_for_list(lst['id'])
-            lst.setdefault('todos', todos)
 
         return lists
 
@@ -137,7 +155,7 @@ class DatabasePersistence:
             with conn.cursor() as cursor:
                 cursor.execute(query, (list_id,))
 
-    def _find_todos_for_list(self, list_id):
+    def find_todos_for_list(self, list_id):
         query = 'SELECT * FROM todos WHERE list_id = %s'
         logger.info('Execute query: %s with list_id: %s', query, list_id)
         with self._database_connect() as conn:
